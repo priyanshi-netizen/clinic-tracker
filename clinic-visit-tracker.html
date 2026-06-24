@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clinic Visit Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --card:#FFFFFF;
+    --ink:#22302A;
+    --ink-soft:#5C6B63;
+    --line:#E2DDD1;
+    --green:#2F6F4F;
+    --green-soft:#E4EFE7;
+    --terracotta:#C96A3D;
+    --terracotta-soft:#F8E9DE;
+    --gold:#B8893A;
+    --gold-soft:#F6EEDC;
+    --shadow: 0 1px 2px rgba(34,48,42,0.04), 0 6px 16px rgba(34,48,42,0.05);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container{ max-width: 980px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  /* ===== Header ===== */
+  header{ margin-bottom: 28px; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin: 0 0 8px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5vw, 40px);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .sub{ color: var(--ink-soft); font-size: 14px; max-width: 560px; line-height:1.5; }
+
+  /* ===== Stat strip ===== */
+  .stats{
+    display:flex; gap:10px; flex-wrap:wrap; margin: 22px 0 26px;
+  }
+  .stat{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 16px;
+    min-width: 92px;
+    box-shadow: var(--shadow);
+  }
+  .stat .n{ font-family:'Fraunces', serif; font-size: 24px; font-weight:600; line-height:1; }
+  .stat .l{ font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.08em; margin-top:4px; }
+  .stat.pending .n{ color: var(--terracotta); }
+  .stat.progress .n{ color: var(--gold); }
+  .stat.done .n{ color: var(--green); }
+
+  /* ===== Toolbar ===== */
+  .toolbar{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    margin-bottom: 18px;
+  }
+  .toolbar .grow{ flex:1; }
+  select, input, textarea{
+    font-family:'Inter', sans-serif;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: var(--card);
+    color: var(--ink);
+    outline: none;
+  }
+  select:focus, input:focus, textarea:focus{ border-color: var(--green); }
+  .btn{
+    font-family:'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid var(--ink);
+    border-radius: 8px;
+    padding: 9px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  .btn:hover{ opacity:.85; }
+  .btn.outline{
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-weight: 500;
+  }
+  .btn.outline:hover{ border-color: var(--ink); opacity:1; }
+  .btn.small{ padding: 6px 12px; font-size: 12px; }
+
+  /* ===== New entry card ===== */
+  .new-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-bottom: 26px;
+  }
+  .new-card h2{
+    font-family:'Fraunces', serif;
+    font-size: 17px; font-weight: 600; margin: 0 0 14px;
+  }
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid2 .full{ grid-column: 1 / -1; }
+  .field label{ display:block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-soft); margin-bottom: 5px; }
+  .field select, .field input, .field textarea{ width: 100%; }
+  .field textarea{ min-height: 56px; resize: vertical; }
+  .new-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top: 14px; }
+
+  /* ===== City & clinic groups ===== */
+  .city-block{
+    margin-bottom: 34px;
+    padding: 18px 18px 4px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  .city-title{
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+    gap: 8px; margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--ink);
+  }
+  .city-title h2{
+    font-family:'Fraunces', serif; font-weight: 600; font-size: 21px; margin:0;
+  }
+  .city-title .city-meta{ font-size: 12.5px; color: var(--ink-soft); }
+  .city-title .city-meta b{ color: var(--ink); }
+
+  .clinic-group{ margin-bottom: 18px; }
+  .clinic-title{
+    display:flex; align-items:baseline; gap: 10px; margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--line);
+  }
+  .clinic-title h3{
+    font-family:'Fraunces', serif; font-weight: 500; font-size: 15px; margin:0;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .clinic-title .count{ font-size: 12px; color: var(--ink-soft); }
+
+  /* ===== Entry card ===== */
+  .entry{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: start;
+  }
+  .entry .main{ min-width:0; }
+  .entry .obs{ font-size: 14px; font-weight: 500; line-height:1.4; margin-bottom: 6px; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap: 8px; align-items:center; }
+  .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: var(--paper);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .assignee{ font-size: 12.5px; color: var(--ink-soft); }
+  .assignee b{ color: var(--ink); font-weight:600; }
+
+  /* stamp-style status badge */
+  .stamp{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1.5px solid;
+    display:inline-flex; align-items:center; gap:6px;
+    transform: rotate(-1.5deg);
+  }
+  .stamp.Pending{ color: var(--terracotta); border-color: var(--terracotta); background: var(--terracotta-soft); }
+  .stamp.In-Progress{ color: var(--gold); border-color: var(--gold); background: var(--gold-soft); }
+  .stamp.Done{ color: var(--green); border-color: var(--green); background: var(--green-soft); transform: rotate(1.5deg); }
+
+  .eta{ font-size: 12px; color: var(--ink-soft); font-family:'JetBrains Mono', monospace; }
+  .eta.set{ color: var(--gold); }
+
+  /* ===== Right side controls ===== */
+  .controls{ display:flex; flex-direction:column; align-items:flex-end; gap: 8px; min-width: 168px; }
+  .controls select{ width: 100%; font-size:12px; padding: 6px 10px; }
+  .controls .eta-row{ display:flex; gap:6px; align-items:center; width:100%; }
+  .controls .eta-row input{ width: 100%; font-size: 12px; padding: 6px 8px; }
+  .del{
+    background:none; border:none; color: var(--ink-soft); cursor:pointer;
+    font-size: 12px; padding: 2px; text-decoration: underline;
+    font-family:'Inter',sans-serif;
+  }
+  .del:hover{ color: var(--terracotta); }
+
+  .empty{
+    text-align:center; padding: 40px 20px; color: var(--ink-soft);
+    font-size: 14px; border: 1px dashed var(--line); border-radius: 12px;
+    background: var(--card);
+  }
+
+  .footnote{
+    margin-top: 30px; font-size: 12px; color: var(--ink-soft);
+    text-align:center; line-height:1.6;
+  }
+
+  @media (max-width: 640px){
+    .grid2{ grid-template-columns: 1fr; }
+    .entry{ grid-template-columns: 1fr; }
+    .controls{ align-items: stretch; min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <p class="eyebrow">Field visit register</p>
+    <h1>Clinic Visit Tracker</h1>
+    <p class="sub">Log what you find on a clinic visit, hand it to the city head who owns the fix, and watch it move from pending to done. Everyone with this page sees the same list.</p>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <select id="filterCity"><option value="">All cities</option></select>
+    <select id="filterClinic"><option value="">All clinics</option></select>
+    <select id="filterStatus">
+      <option value="">All statuses</option>
+      <option value="Pending">Pending</option>
+      <option value="In Progress">In progress</option>
+      <option value="Done">Done</option>
+    </select>
+    <div class="grow"></div>
+    <button class="btn outline small" id="manageBtn">Manage cities, clinics &amp; city heads</button>
+  </div>
+
+  <div class="new-card">
+    <h2>Log a new observation</h2>
+    <div class="grid2">
+      <div class="field">
+        <label>City</label>
+        <select id="newCity"></select>
+      </div>
+      <div class="field">
+        <label>Clinic</label>
+        <select id="newClinic"></select>
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="newCategory">
+          <option>Infrastructure</option>
+          <option>Cleanliness &amp; Hygiene</option>
+          <option>Safety &amp; Compliance</option>
+          <option>Medical Supplies</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Target ETA (optional)</label>
+        <input type="date" id="newEta" />
+      </div>
+      <div class="field full">
+        <label>Observation</label>
+        <textarea id="newObs" placeholder="e.g. The doctor's room did not have a name plate"></textarea>
+      </div>
+    </div>
+    <div class="new-actions">
+      <span id="assigneePreview" style="font-size:12px; color:var(--ink-soft); align-self:center; margin-right:auto;"></span>
+      <button class="btn" id="addBtn">Add &amp; email city head</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+  <p class="footnote">Adding an observation opens a pre-filled email to that city's head &mdash; just hit send. Anyone with this page link can update status or ETA, and changes save for everyone.</p>
+</div>
+
+<!-- Manage modal -->
+<div id="manageOverlay" style="display:none; position:fixed; inset:0; background:rgba(34,48,42,0.35); align-items:center; justify-content:center; z-index:100;">
+  <div style="background:var(--card); border-radius:14px; padding:22px 24px; width:420px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow: var(--shadow);">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 6px;">Cities &amp; city heads</h2>
+    <p style="font-size:12px; color:var(--ink-soft); margin:0 0 10px;">Each city has one head who gets emailed when a task lands in their city.</p>
+    <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+      <input type="text" id="newCityName" placeholder="City name" style="flex:1; min-width:110px;" />
+      <input type="text" id="newCityHeadName" placeholder="City head name" style="flex:1; min-width:110px;" />
+      <input type="email" id="newCityHeadEmail" placeholder="City head email" style="flex:1; min-width:140px;" />
+      <button class="btn small" id="addCityBtn">Add city</button>
+    </div>
+    <div id="cityList" style="margin-bottom:18px;"></div>
+
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 14px;">Clinics</h2>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <select id="newClinicCity" style="flex:1;"></select>
+      <input type="text" id="newClinicName" placeholder="Clinic name" style="flex:1;" />
+      <button class="btn small" id="addClinicBtn">Add</button>
+    </div>
+    <div id="clinicList" style="margin-bottom:18px;"></div>
+
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="btn outline small" id="closeManage">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_CITIES = [
+  { name: 'Kolkata', headName: 'Riya Sharma', headEmail: 'riya.sharma@example.com' },
+  { name: 'Howrah', headName: 'Arjun Das', headEmail: 'arjun.das@example.com' }
+];
+const DEFAULT_CLINICS = [
+  { city: 'Kolkata', name: 'Clinic - Park Street' },
+  { city: 'Kolkata', name: 'Clinic - Salt Lake' },
+  { city: 'Howrah', name: 'Clinic - Howrah Maidan' }
+];
+
+let state = {
+  cities: JSON.parse(JSON.stringify(DEFAULT_CITIES)),
+  clinics: JSON.parse(JSON.stringify(DEFAULT_CLINICS)),
+  entries: []
+};
+
+let filters = { city: '', clinic: '', status: '' };
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('clinic-tracker-data-v2', true);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      state.cities = parsed.cities?.length ? parsed.cities : state.cities;
+      state.clinics = parsed.clinics?.length ? parsed.clinics : state.clinics;
+      state.entries = parsed.entries || [];
+    }
+  }catch(e){
+    console.log('No existing data yet, starting fresh.');
+  }
+  render();
+}
+
+async function saveState(){
+  try{
+    await window.storage.set('clinic-tracker-data-v2', JSON.stringify(state), true);
+  }catch(e){
+    console.error('Save failed', e);
+  }
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function fmtDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function cityHead(cityName){
+  return state.cities.find(c => c.name === cityName) || null;
+}
+
+function clinicsForCity(cityName){
+  return state.clinics.filter(c => c.city === cityName);
+}
+
+function populateSelects(){
+  const cityOptions = state.cities.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+
+  document.getElementById('newCity').innerHTML = cityOptions || '<option value="">Add a city first</option>';
+  document.getElementById('filterCity').innerHTML = '<option value="">All cities</option>' + cityOptions;
+
+  refreshNewClinicOptions();
+  refreshFilterClinicOptions();
+  refreshAssigneePreview();
+}
+
+function refreshNewClinicOptions(){
+  const city = document.getElementById('newCity').value;
+  const clinics = clinicsForCity(city);
+  document.getElementById('newClinic').innerHTML = clinics.length
+    ? clinics.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('')
+    : '<option value="">Add a clinic for this city first</option>';
+}
+
+function refreshFilterClinicOptions(){
+  const city = filters.city;
+  const clinics = city ? clinicsForCity(city) : state.clinics;
+  document.getElementById('filterClinic').innerHTML = '<option value="">All clinics</option>' +
+    clinics.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+}
+
+function refreshAssigneePreview(){
+  const city = document.getElementById('newCity').value;
+  const head = cityHead(city);
+  const el = document.getElementById('assigneePreview');
+  el.textContent = head ? `Will be emailed to ${head.headName} (${head.headEmail})` : 'No city head set for this city yet';
+}
+
+function renderStats(){
+  const total = state.entries.length;
+  const pending = state.entries.filter(e => e.status === 'Pending').length;
+  const inprog = state.entries.filter(e => e.status === 'In Progress').length;
+  const done = state.entries.filter(e => e.status === 'Done').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="n">${total}</div><div class="l">Total</div></div>
+    <div class="stat pending"><div class="n">${pending}</div><div class="l">Pending</div></div>
+    <div class="stat progress"><div class="n">${inprog}</div><div class="l">In progress</div></div>
+    <div class="stat done"><div class="n">${done}</div><div class="l">Done</div></div>
+  `;
+}
+
+function renderList(){
+  const list = document.getElementById('list');
+  let entries = [...state.entries];
+
+  if(filters.city) entries = entries.filter(e => e.city === filters.city);
+  if(filters.clinic) entries = entries.filter(e => e.clinic === filters.clinic);
+  if(filters.status) entries = entries.filter(e => e.status === filters.status);
+
+  if(entries.length === 0){
+    list.innerHTML = `<div class="empty">No observations match this view yet. Log one above to get started.</div>`;
+    return;
+  }
+
+  // group by city, then by clinic within city
+  const cityGroups = {};
+  entries.slice().reverse().forEach(e => {
+    if(!cityGroups[e.city]) cityGroups[e.city] = {};
+    if(!cityGroups[e.city][e.clinic]) cityGroups[e.city][e.clinic] = [];
+    cityGroups[e.city][e.clinic].push(e);
+  });
+
+  let html = '';
+  Object.keys(cityGroups).forEach(city => {
+    const head = cityHead(city);
+    const cityEntries = Object.values(cityGroups[city]).flat();
+    const doneCity = cityEntries.filter(i => i.status === 'Done').length;
+    html += `<div class="city-block">
+      <div class="city-title">
+        <h2>${escapeHtml(city)}</h2>
+        <span class="city-meta">${head ? `City head: <b>${escapeHtml(head.headName)}</b>` : 'No city head set'} &nbsp;&middot;&nbsp; ${doneCity}/${cityEntries.length} done</span>
+      </div>`;
+    Object.keys(cityGroups[city]).forEach(clinic => {
+      const items = cityGroups[city][clinic];
+      const done = items.filter(i => i.status === 'Done').length;
+      html += `<div class="clinic-group">
+        <div class="clinic-title">
+          <h3>${escapeHtml(clinic)}</h3>
+          <span class="count">${done}/${items.length} done</span>
+        </div>`;
+      items.forEach(item => { html += renderEntry(item); });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  list.innerHTML = html;
+}
+
+function renderEntry(item){
+  const statusClass = item.status.replace(' ', '-');
+  const etaClass = item.eta ? 'set' : '';
+  const etaLabel = item.eta ? `ETA: ${fmtDate(item.eta)}` : 'No ETA set';
+  const head = cityHead(item.city);
+  return `
+    <div class="entry">
+      <div class="main">
+        <div class="obs">${escapeHtml(item.obs)}</div>
+        <div class="meta-row">
+          <span class="tag">${escapeHtml(item.category)}</span>
+          <span class="stamp ${statusClass}">${escapeHtml(item.status)}</span>
+          <span class="eta ${etaClass}">${etaLabel}</span>
+          ${head ? `<span class="assignee">Assigned to <b>${escapeHtml(head.headName)}</b></span>` : `<span class="assignee">No city head</span>`}
+        </div>
+      </div>
+      <div class="controls">
+        <select onchange="updateField('${item.id}','status',this.value)">
+          <option value="Pending" ${item.status==='Pending'?'selected':''}>Pending</option>
+          <option value="In Progress" ${item.status==='In Progress'?'selected':''}>In progress</option>
+          <option value="Done" ${item.status==='Done'?'selected':''}>Done</option>
+        </select>
+        <div class="eta-row">
+          <input type="date" value="${item.eta || ''}" onchange="updateField('${item.id}','eta',this.value)" />
+        </div>
+        <button class="del" onclick="resendEmail('${item.id}')" style="text-decoration:underline;">Re-email city head</button>
+        <button class="del" onclick="deleteEntry('${item.id}')">Remove</button>
+      </div>
+    </div>
+  `;
+}
+
+function render(){
+  populateSelects();
+  renderStats();
+  renderList();
+}
+
+window.updateField = function(id, field, value){
+  const entry = state.entries.find(e => e.id === id);
+  if(!entry) return;
+  entry[field] = value;
+  saveState();
+  render();
+};
+
+window.deleteEntry = function(id){
+  state.entries = state.entries.filter(e => e.id !== id);
+  saveState();
+  render();
+};
+
+function buildMailto(entry){
+  const head = cityHead(entry.city);
+  if(!head || !head.headEmail) return null;
+  const subject = `[${entry.city}] New clinic task: ${entry.clinic}`;
+  const body = [
+    `Hi ${head.headName},`,
+    '',
+    `A new item was logged during a clinic visit and assigned to you.`,
+    '',
+    `City: ${entry.city}`,
+    `Clinic: ${entry.clinic}`,
+    `Category: ${entry.category}`,
+    `Observation: ${entry.obs}`,
+    `Target ETA: ${entry.eta ? fmtDate(entry.eta) : 'Not set'}`,
+    '',
+    `Please open the tracker link below, find this task under ${entry.city} > ${entry.clinic}, and update the status (Pending / In Progress / Done) and ETA.`,
+    '',
+    `Tracker link: ${window.location.href}`,
+    '',
+    `Thanks,`,
+    `HR Team`
+  ].join('\n');
+  return `mailto:${encodeURIComponent(head.headEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+window.resendEmail = function(id){
+  const entry = state.entries.find(e => e.id === id);
+  if(!entry) return;
+  const link = buildMailto(entry);
+  if(!link){ alert('No city head email set for ' + entry.city + '. Add one via Manage cities.'); return; }
+  window.location.href = link;
+};
+
+document.getElementById('newCity').addEventListener('change', () => { refreshNewClinicOptions(); refreshAssigneePreview(); });
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  const city = document.getElementById('newCity').value;
+  const clinic = document.getElementById('newClinic').value;
+  const category = document.getElementById('newCategory').value;
+  const obs = document.getElementById('newObs').value.trim();
+  const eta = document.getElementById('newEta').value;
+
+  if(!city){ alert('Add at least one city first (Manage cities, clinics & city heads).'); return; }
+  if(!clinic){ alert('Add at least one clinic for this city first.'); return; }
+  if(!obs){ alert('Please describe the observation.'); return; }
+
+  const entry = {
+    id: 'e' + Date.now() + Math.floor(Math.random()*1000),
+    city, clinic, category, obs, eta,
+    status: 'Pending',
+    createdAt: new Date().toISOString()
+  };
+  state.entries.push(entry);
+
+  document.getElementById('newObs').value = '';
+  document.getElementById('newEta').value = '';
+  saveState();
+  render();
+
+  const link = buildMailto(entry);
+  if(link){ window.location.href = link; }
+  else{ alert('Saved, but no city head email is set for ' + city + ' yet. Add one via Manage cities.'); }
+});
+
+document.getElementById('filterCity').addEventListener('change', e => { filters.city = e.target.value; filters.clinic=''; refreshFilterClinicOptions(); renderList(); });
+document.getElementById('filterClinic').addEventListener('change', e => { filters.clinic = e.target.value; renderList(); });
+document.getElementById('filterStatus').addEventListener('change', e => { filters.status = e.target.value; renderList(); });
+
+// Manage modal
+const overlay = document.getElementById('manageOverlay');
+document.getElementById('manageBtn').addEventListener('click', () => { renderManage(); overlay.style.display = 'flex'; });
+document.getElementById('closeManage').addEventListener('click', () => { overlay.style.display = 'none'; });
+overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.style.display = 'none'; });
+
+function renderManage(){
+  document.getElementById('cityList').innerHTML = state.cities.map((c,i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;">
+      <span>${escapeHtml(c.name)} &mdash; ${escapeHtml(c.headName)} <span style="color:var(--ink-soft);">(${escapeHtml(c.headEmail)})</span></span>
+      <button class="del" onclick="removeCity(${i})">Remove</button>
+    </div>`).join('') || '<p style="font-size:13px; color:var(--ink-soft);">No cities yet.</p>';
+
+  document.getElementById('newClinicCity').innerHTML = state.cities.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="">Add a city first</option>';
+
+  document.getElementById('clinicList').innerHTML = state.clinics.map((c,i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;">
+      <span>${escapeHtml(c.name)} <span style="color:var(--ink-soft);">(${escapeHtml(c.city)})</span></span>
+      <button class="del" onclick="removeClinic(${i})">Remove</button>
+    </div>`).join('') || '<p style="font-size:13px; color:var(--ink-soft);">No clinics yet.</p>';
+}
+
+document.getElementById('addCityBtn').addEventListener('click', () => {
+  const name = document.getElementById('newCityName').value.trim();
+  const headName = document.getElementById('newCityHeadName').value.trim();
+  const headEmail = document.getElementById('newCityHeadEmail').value.trim();
+  if(!name){ alert('Enter a city name.'); return; }
+  state.cities.push({ name, headName: headName || 'Unassigned', headEmail });
+  document.getElementById('newCityName').value = '';
+  document.getElementById('newCityHeadName').value = '';
+  document.getElementById('newCityHeadEmail').value = '';
+  saveState(); renderManage(); render();
+});
+
+document.getElementById('addClinicBtn').addEventListener('click', () => {
+  const city = document.getElementById('newClinicCity').value;
+  const name = document.getElementById('newClinicName').value.trim();
+  if(!city){ alert('Add a city first.'); return; }
+  if(!name) return;
+  state.clinics.push({ city, name });
+  document.getElementById('newClinicName').value = '';
+  saveState(); renderManage(); render();
+});
+
+window.removeCity = function(i){
+  const city = state.cities[i];
+  state.cities.splice(i,1);
+  state.clinics = state.clinics.filter(c => c.city !== city.name);
+  state.entries = state.entries.filter(e => e.city !== city.name);
+  saveState(); renderManage(); render();
+};
+
+window.removeClinic = function(i){
+  const clinic = state.clinics[i];
+  state.clinics.splice(i,1);
+  state.entries = state.entries.filter(e => e.clinic !== clinic.name);
+  saveState(); renderManage(); render();
+};
+
+loadState();
+</script>
+</body>
+</html>
